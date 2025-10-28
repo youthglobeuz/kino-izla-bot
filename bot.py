@@ -7,7 +7,7 @@ import time
 
 BOT_TOKEN = "8374261818:AAHQ7Xvf-toUWxT5ipQrRhVrD-PmBmDDz-s"
 CHANNEL_USERNAME = "@youthglobexba"   # asosiy kanal
-MOVIE_CHANNEL = "@Yangi_kino_izla"    # kinolar kanali
+MOVIE_CHANNEL = "@kiiinoIzla"    # kinolar kanali
 
 bot = telebot.TeleBot(BOT_TOKEN)
 
@@ -92,7 +92,7 @@ def send_movie(message):
         "#444": 27,
         "#408": 28,
         "#256": 29,
-        "#999": 30,
+        "#999": 31,
     }
 
     if code in movies:
