@@ -3,10 +3,11 @@ time.sleep(3)
 import telebot
 from telebot import types
 import requests
+import time
 
 BOT_TOKEN = "8374261818:AAHQ7Xvf-toUWxT5ipQrRhVrD-PmBmDDz-s"
-CHANNEL_USERNAME = "@youthglobexba"   # asosiy kanal (obuna bo‘lish shart)
-MOVIE_CHANNEL = "@Yangi_kino_izla"   # kinolar saqlanadigan kanal
+CHANNEL_USERNAME = "@youthglobexba"   # asosiy kanal
+MOVIE_CHANNEL = "@Yangi_kino_izla"    # kinolar kanali
 
 bot = telebot.TeleBot(BOT_TOKEN)
 
@@ -28,9 +29,11 @@ def send_welcome(message):
         message.chat.id,
         f"🎬 Salom, {message.from_user.first_name}!\n\n"
         "To‘liq filmlarni tomosha qilish uchun avval bizning asosiy kanalimizga obuna bo‘ling 👇\n\n"
-        "💼 Eng ishonchli va litsenziyaga ega Xususiy Bandlik Agentliklari — bir joyda!\n\n"
-        "🌍 Quyidagi havolani bosing va tanlovni o‘zingiz qiling:\n"
-        "➡️ 👉 [A’zo bo‘lish uchun bosing](https://t.me/c/3134720426/31)",
+        "💼 Eng ishonchli va litsenziyaga ega Xususiy Bandlik Agentliklari — bir joyda!\n"
+        "Endi har birini alohida izlab yurish shart emas — faqat 1 bosishda 10 ta eng faol va ishonchli XBA kanallariga a’zo bo‘ling! 🔥\n\n"
+        "🌍 Ish topish — oson, tez va xavfsiz!\n\n"
+        "👇 Quyidagi havolani bosing va tanlovni o‘zingiz qiling:\n"
+        "➡️ 👉 [A’zo bo‘lish uchun bosing](https://t.me/addlist/hY66mxmsU3cwOTRi)!",
         parse_mode="Markdown",
         reply_markup=markup
     )
@@ -47,11 +50,10 @@ def callback_check(call):
     else:
         bot.send_message(
             call.message.chat.id,
-            "❌ Siz hali obuna bo‘lmadingiz.\nIltimos, kanalga obuna bo‘ling va qayta urinib ko‘ring 👇\n"
-            f"{CHANNEL_USERNAME}"
+            f"❌ Siz hali obuna bo‘lmadingiz.\nIltimos, kanalga obuna bo‘ling va qayta urinib ko‘ring 👇\n{CHANNEL_USERNAME}"
         )
 
-# 🔹 Kino kodi qabul qilish
+# 🔹 Kino kodi orqali kino yuborish
 @bot.message_handler(func=lambda m: m.text.startswith("#"))
 def send_movie(message):
     code = message.text.strip()
@@ -62,50 +64,55 @@ def send_movie(message):
 
     # 🔸 Kodga mos kino ID lar
     movies = {
-        "#104": 2,  # bu joyga haqiqiy kino post ID larini kiriting
+        "#104": 2,
         "#1102": 3,
- "#1105": 4,
- "#843": 5,
- "#1212": 6,
- "#16": 7,
- "#9": 8,
- "#1315": 9,
- "#10": 10,
- "#24": 11,
- "#26": 12,
- "#25": 13,
- "#27": 14,
- "#105": 15,
- "#1200": 16,
- "#106": 17,
- "#250": 18,
- "#2019": 19,
- "#219": 20,
- "#404": 21,
- "#270": 22,
- "#390": 23,
- "#395": 24,
- "#398": 25,
- "#410": 26,
- "#444": 27,
- "#408": 28,
- "#256": 29,
- "#999": 30,
-
+        "#1105": 4,
+        "#843": 5,
+        "#1212": 6,
+        "#16": 7,
+        "#9": 8,
+        "#1315": 9,
+        "#10": 10,
+        "#24": 11,
+        "#26": 12,
+        "#25": 13,
+        "#27": 14,
+        "#105": 15,
+        "#1200": 16,
+        "#106": 17,
+        "#250": 18,
+        "#2019": 19,
+        "#219": 20,
+        "#404": 21,
+        "#270": 22,
+        "#390": 23,
+        "#395": 24,
+        "#398": 25,
+        "#410": 26,
+        "#444": 27,
+        "#408": 28,
+        "#256": 29,
+        "#999": 30,
     }
 
     if code in movies:
         try:
             bot.forward_message(message.chat.id, MOVIE_CHANNEL, movies[code])
         except Exception as e:
-            bot.send_message(message.chat.id, "⚠️ Kino topilmadi yoki kanalga botni admin qilib qo‘ymagansiz.")
-            print(e)
+            bot.send_message(
+                message.chat.id,
+                "⚠️ Kino topilmadi yoki bot kanalga admin qilib qo‘yilmagan.\n\n"
+                "Iltimos, botni kino joylangan kanalga admin qilib qo‘ying (Read Messages, Forward Messages ruxsati bilan)."
+            )
+            print("Xatolik:", e)
     else:
-        bot.send_message(message.chat.id, "⚠️ Noto‘g‘ri kod. Iltimos, to‘g‘ri kino kodini kiriting (masalan: #001)")
+        bot.send_message(
+            message.chat.id,
+            "⚠️ Noto‘g‘ri kod. Iltimos, to‘g‘ri kino kodini kiriting (masalan: #001)"
+        )
 
 # 🔹 Botni ishga tushirish
 if __name__ == "__main__":
-    import time
     time.sleep(3)
     print("🤖 Bot ishga tushdi...")
     bot.infinity_polling(skip_pending=True)
