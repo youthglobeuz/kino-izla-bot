@@ -1,46 +1,70 @@
-import telebot, requests, os
+import telebot
 from telebot import types
+import os
 
-BOT_TOKEN = os.getenv("BOT_TOKEN")
-CHANNEL_USERNAME = os.getenv("CHANNEL_USERNAME")  # @youthglobexba
-MOVIE_CHANNEL = os.getenv("MOVIE_CHANNEL")        # @Yangi_kino_izla
-ADMIN_ID = os.getenv("ADMIN_ID")
-
+BOT_TOKEN = os.environ.get("BOT_TOKEN")
 bot = telebot.TeleBot(BOT_TOKEN)
 
-def is_subscribed(user_id):
-    url = f"https://api.telegram.org/bot{BOT_TOKEN}/getChatMember?chat_id={CHANNEL_USERNAME}&user_id={user_id}"
-    res = requests.get(url).json()
-    return res.get("result", {}).get("status") in ["member", "administrator", "creator"]
+CHANNEL_USERNAME = "@youthglobexba"
 
-@bot.message_handler(commands=["start"])
+@bot.message_handler(commands=['start'])
 def start(message):
+    user = message.from_user
     markup = types.InlineKeyboardMarkup()
-    markup.add(types.InlineKeyboardButton("✅ I Subscribed", callback_data="check"))
+    btn = types.InlineKeyboardButton("✅ Obuna bo‘ldim", callback_data='check_sub')
+    markup.add(btn)
+
+    text = (
+        f"🎬 Salom, {user.first_name}!\n\n"
+        f"To‘liq filmlarni tomosha qilish uchun avval bizning asosiy kanalimizga obuna bo‘ling 👇\n\n"
+        f"💼 Eng ishonchli va litsenziyaga ega Xususiy Bandlik Agentliklari — bir joyda!\n\n"
+        f"Endi har birini alohida izlab yurish shart emas — faqat 1 bosishda 10 ta eng faol va ishonchli XBA kanallariga a’zo bo‘ling! 🔥\n\n"
+        f"🌍 Ish topish — oson, tez va xavfsiz!\n\n"
+        f"👇 Quyidagi havolani bosing va tanlovni o‘zingiz qiling:\n"
+        f"➡️ 👉 [A’zo bo‘lish uchun bosing](https://t.me/addlist/hY66mxmsU3cwOTRi)\n\n"
+        f"✅ Obuna bo‘lgandan so‘ng, pastdagi tugmani bosing ⤵️"
+    )
+
+    bot.send_message(message.chat.id, text, reply_markup=markup, parse_mode="Markdown")
+
+@bot.callback_query_handler(func=lambda call: call.data == 'check_sub')
+def check_subscription(call):
+    user_id = call.from_user.id
+    try:
+        chat_member = bot.get_chat_member(CHANNEL_USERNAME, user_id)
+        if chat_member.status in ['member', 'administrator', 'creator']:
+            send_movie_menu(call.message)
+        else:
+            bot.answer_callback_query(
+                call.id,
+                "🚫 Siz hali kanalga obuna bo‘lmagansiz. Iltimos, obuna bo‘ling va qayta urinib ko‘ring.",
+                show_alert=True
+            )
+    except Exception as e:
+        bot.answer_callback_query(call.id, f"❗ Xatolik: {e}", show_alert=True)
+
+def send_movie_menu(message):
+    markup = types.InlineKeyboardMarkup()
+    markup.add(types.InlineKeyboardButton("🎥 Yangi kinolar", callback_data='new_movies'))
+    markup.add(types.InlineKeyboardButton("📺 Seriallar", callback_data='series'))
+    markup.add(types.InlineKeyboardButton("🔙 Chiqish", callback_data='exit'))
+
     bot.send_message(
         message.chat.id,
-        f"🎬 Hello {message.from_user.first_name}!\n\nTo watch full movies, please first subscribe to our main channel 👇\n👉 {CHANNEL_USERNAME}",
+        "🎉 Tabriklaymiz! Siz kanalga muvaffaqiyatli obuna bo‘ldingiz.\n\n"
+        "Quyidagi bo‘limlardan birini tanlang 👇",
         reply_markup=markup
     )
 
-@bot.callback_query_handler(func=lambda call: call.data == "check")
-def check(call):
-    if is_subscribed(call.from_user.id):
-        bot.send_message(call.message.chat.id, "✅ Great! Send the *movie code* (e.g. #001)", parse_mode="Markdown")
-    else:
-        bot.send_message(call.message.chat.id, f"❌ You haven’t joined {CHANNEL_USERNAME} yet. Please join and try again.")
+@bot.callback_query_handler(func=lambda call: call.data in ['new_movies', 'series', 'exit'])
+def handle_menu(call):
+    if call.data == 'new_movies':
+        bot.send_message(call.message.chat.id, "🎬 Yangi kinolar ro‘yxati tez orada joylanadi!")
+    elif call.data == 'series':
+        bot.send_message(call.message.chat.id, "📺 Seriallar bo‘limi hali tayyor emas, tez orada!")
+    elif call.data == 'exit':
+        bot.send_message(call.message.chat.id, "👋 Rahmat! Botdan chiqdiz.")
 
-@bot.message_handler(func=lambda m: m.text.startswith("#"))
-def movie_code(message):
-    if not is_subscribed(message.from_user.id):
-        bot.send_message(message.chat.id, f"❌ You must join {CHANNEL_USERNAME} first.")
-        return
-    movies = {"#001": 10, "#002": 15}  # Replace with your actual message IDs
-    code = message.text.strip()
-    if code in movies:
-        bot.forward_message(message.chat.id, MOVIE_CHANNEL, movies[code])
-    else:
-        bot.send_message(message.chat.id, "⚠️ Invalid movie code.")
-
-bot.infinity_polling()
-
+if __name__ == "__main__":
+    print("🤖 Bot ishga tushdi...")
+    bot.infinity_polling()
