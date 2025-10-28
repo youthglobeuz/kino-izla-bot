@@ -64,51 +64,50 @@ def send_movie(message):
 
     # 🔸 Kodga mos kino ID lar
     movies = {
-        "#104": 2,
-        "#1102": 3,
-        "#1105": 4,
-        "#843": 5,
-        "#1212": 6,
-        "#16": 7,
-        "#9": 8,
-        "#1315": 9,
-        "#10": 10,
-        "#24": 11,
-        "#26": 12,
-        "#25": 13,
-        "#27": 14,
-        "#105": 15,
-        "#1200": 16,
-        "#106": 17,
-        "#250": 18,
-        "#2019": 19,
-        "#219": 20,
-        "#404": 21,
-        "#270": 22,
-        "#390": 23,
-        "#395": 24,
-        "#398": 25,
-        "#410": 26,
-        "#444": 27,
-        "#408": 28,
-        "#256": 29,
+        "#104": 3,
+        "#1102": 4,
+        "#1105": 5,
+        "#843": 6,
+        "#1212": 7,
+        "#16": 8,
+        "#9": 9,
+        "#1315": 10,
+        "#10": 11,
+        "#24": 12,
+        "#26": 13,
+        "#25": 14,
+        "#27": 15,
+        "#105": 16,
+        "#1200": 17,
+        "#106": 18,
+        "#250": 19,
+        "#2019": 20,
+        "#219": 21,
+        "#404": 22,
+        "#270": 23,
+        "#390": 24,
+        "#395": 25,
+        "#398": 26,
+        "#410": 27,
+        "#444": 28,
+        "#408": 29,
+        "#256": 30,
         "#999": 31,
     }
 
     if code in movies:
         try:
-            bot.forward_message(message.chat.id, MOVIE_CHANNEL, movies[code])
+            bot.copy_message(message.chat.id, MOVIE_CHANNEL, movies[code])
         except Exception as e:
             bot.send_message(
                 message.chat.id,
-                "⚠️ Kino topilmadi yoki bot kanalga admin qilib qo‘yilmagan.\n\n"
-                "Iltimos, botni kino joylangan kanalga admin qilib qo‘ying (Read Messages, Forward Messages ruxsati bilan)."
+                  "⚠️ Noto‘g‘ri kod. Iltimos, to‘g‘ri kino kodini kiriting (masalan: #999)"
             )
             print("Xatolik:", e)
     else:
         bot.send_message(
             message.chat.id,
-            "⚠️ Noto‘g‘ri kod. Iltimos, to‘g‘ri kino kodini kiriting (masalan: #001)"
+            "⚠️ Noto‘g‘ri kod. Iltimos, to‘g‘ri kino kodini kiriting (masalan: #999)"
         )
 
 # 🔹 Botni ishga tushirish
@@ -116,3 +115,4 @@ if __name__ == "__main__":
     time.sleep(3)
     print("🤖 Bot ishga tushdi...")
     bot.infinity_polling(skip_pending=True)
+
