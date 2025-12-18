@@ -30,10 +30,10 @@ def send_welcome(message):
         f"🎬 Salom, {message.from_user.first_name}!\n\n"
         "To‘liq filmlarni tomosha qilish uchun avval bizning asosiy kanalimizga obuna bo‘ling 👇\n\n"
         "💼 Eng ishonchli va litsenziyaga ega Xususiy Bandlik Agentliklari — bir joyda!\n"
-        "Endi har birini alohida izlab yurish shart emas — faqat 1 bosishda 10 ta eng faol va ishonchli XBA kanallariga a’zo bo‘ling! 🔥\n\n"
+        "Endi har birini alohida izlab yurish shart emas — faqat 1 bosishda eng faol va ishonchli XBA kanallariga a’zo bo‘ling! 🔥\n\n"
         "🌍 Ish topish — oson, tez va xavfsiz!\n\n"
         "👇 Quyidagi havolani bosing va tanlovni o‘zingiz qiling:\n"
-        "➡️ 👉 [A’zo bo‘lish uchun bosing](https://t.me/addlist/hY66mxmsU3cwOTRi)!",
+        "➡️ 👉 [A’zo bo‘lish uchun bosing](https://t.me/addlist/hY66mxmsU3cwOTRi)!", 
         parse_mode="Markdown",
         reply_markup=markup
     )
