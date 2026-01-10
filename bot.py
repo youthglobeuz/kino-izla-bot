@@ -1,4 +1,3 @@
-
 import os
 import json
 import telebot
@@ -12,19 +11,17 @@ BOT_TOKEN = os.environ.get("BOT_TOKEN")
 CHANNEL_USERNAME = os.environ.get("CHANNEL_USERNAME")
 SHEET_NAME = os.environ.get("SHEET_NAME")
 GOOGLE_CREDENTIALS_JSON = os.environ.get("GOOGLE_CREDENTIALS_JSON")
+
+# '\\n' larni asl newline'ga o'zgartiramiz
+GOOGLE_CREDENTIALS_JSON = GOOGLE_CREDENTIALS_JSON.replace("\\n", "\n")
+creds_dict = json.loads(GOOGLE_CREDENTIALS_JSON)
+
 # ================= TELEGRAM BOT =================
 bot = telebot.TeleBot(BOT_TOKEN)
 user_data = {}
 
 # ================= GOOGLE SHEETS =================
-
-# "\n" ni to'g'ri parse qilish
-GOOGLE_CREDENTIALS_JSON = GOOGLE_CREDENTIALS_JSON.replace("\\n", "\n")
-
-creds_dict = json.loads(GOOGLE_CREDENTIALS_JSON)
-
-scope = ["https://www.googleapis.com/auth/spreadsheets",
-         "https://www.googleapis.com/auth/drive"]
+scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
 creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
 client = gspread.authorize(creds)
 sheet = client.open(SHEET_NAME).sheet1
@@ -47,13 +44,11 @@ def get_name(message):
         "telegram_id": message.from_user.id,
         "username": message.from_user.username
     }
-
     kb = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
     kb.add(types.KeyboardButton("📞 Telefon raqamni yuborish", request_contact=True))
-
     bot.send_message(
         message.chat.id,
-        "Rahmat! Endi telefon raqamingizni yuboring 👇",
+        "Rahmat!\nEndi telefon raqamingizni yuboring 👇",
         reply_markup=kb
     )
 
@@ -74,12 +69,7 @@ def ask_location(chat_id):
     ]
     for loc in locations:
         kb.add(types.KeyboardButton(loc))
-
-    msg = bot.send_message(
-        chat_id,
-        "Iltimos, qaysi viloyatdan ekanligingizni tanlang 👇",
-        reply_markup=kb
-    )
+    msg = bot.send_message(chat_id, "Iltimos, qaysi hududdan ekanligingizni tanlang 👇", reply_markup=kb)
     bot.register_next_step_handler(msg, save_location)
 
 # ================= SAVE LOCATION =================
@@ -90,12 +80,10 @@ def save_location(message):
         "Buhoro viloyati", "Navoi viloyati", "Horazm viloyati", "Qoraqalpogiston Respublikasi",
         "Qashqadaryo viloyati", "Surhondaryo viloyati"
     ]
-
     if message.text not in valid_locations:
-        bot.send_message(message.chat.id, "❌ Iltimos, faqat ro‘yxatdan tanlang.")
+        bot.send_message(message.chat.id, "❌ Iltimos, faqat berilgan ro‘yxatdan tanlang.")
         ask_location(message.chat.id)
         return
-
     user_data[message.chat.id]["location"] = message.text
 
     kb = types.InlineKeyboardMarkup()
@@ -103,16 +91,9 @@ def save_location(message):
         "📢 Kanalga obuna bo‘lish",
         url=f"https://t.me/{CHANNEL_USERNAME.lstrip('@')}"
     ))
-    kb.add(types.InlineKeyboardButton(
-        "✅ Obunani tekshirish",
-        callback_data="check_sub"
-    ))
+    kb.add(types.InlineKeyboardButton("✅ Obunani tekshirish", callback_data="check_sub"))
 
-    bot.send_message(
-        message.chat.id,
-        "Ish yarmarkasida ishtirok etish uchun kanalga obuna bo‘ling 👇",
-        reply_markup=kb
-    )
+    bot.send_message(message.chat.id, "Ish yarmarkasida ishtirok etish uchun kanalga obuna bo‘ling 👇", reply_markup=kb)
 
 # ================= CHECK SUB =================
 @bot.callback_query_handler(func=lambda call: call.data == "check_sub")
@@ -122,16 +103,10 @@ def check_subscription(call):
         if status in ["member", "administrator", "creator"]:
             save_to_sheet(call.message.chat.id)
             bot.answer_callback_query(call.id, "Tasdiqlandi ✅")
-            bot.send_message(
-                call.message.chat.id,
-                "✅ Obuna tasdiqlandi!\n\nSiz Ish yarmarkasiga kirishingiz mumkin."
-            )
+            bot.send_message(call.message.chat.id, "✅ Obuna tasdiqlandi!\n\nSiz Ish yarmarkasiga kirishingiz mumkin.")
         else:
             bot.answer_callback_query(call.id, "❌ Obuna topilmadi")
-            bot.send_message(
-                call.message.chat.id,
-                "❌ Avval kanalga obuna bo‘ling va qayta tekshiring."
-            )
+            bot.send_message(call.message.chat.id, "❌ Avval kanalga obuna bo‘ling va qayta tekshiring.")
     except Exception as e:
         bot.send_message(call.message.chat.id, f"❌ Tekshirishda xatolik yuz berdi.\n{str(e)}")
 
