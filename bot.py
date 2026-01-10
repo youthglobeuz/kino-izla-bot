@@ -1,120 +1,181 @@
-import time
-time.sleep(3)
 import telebot
 from telebot import types
-import requests
-import time
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
+from datetime import datetime
 
-BOT_TOKEN = "8374261818:AAHQ7Xvf-toUWxT5ipQrRhVrD-PmBmDDz-s"
-CHANNEL_USERNAME = "@youthglobexba"   # asosiy kanal
-MOVIE_CHANNEL = "@kiiinoIzla"    # kinolar kanali
+BOT_TOKEN = "8532689265:AAGMA6pwWeNpzjD7LS9Jrb9fsn7xgJmySgA"
+CHANNEL_USERNAME = "@xorijda_ish_elonlari"
+SHEET_NAME = "Xorijda ish yarmakasi lead"
 
 bot = telebot.TeleBot(BOT_TOKEN)
+user_data = {}
 
-# 🔹 Obunani tekshirish funksiyasi
-def is_subscribed(user_id):
-    url = f"https://api.telegram.org/bot{BOT_TOKEN}/getChatMember?chat_id={CHANNEL_USERNAME}&user_id={user_id}"
-    r = requests.get(url).json()
-    status = r.get("result", {}).get("status", "")
-    return status in ["member", "administrator", "creator"]
+# ================= GOOGLE SHEETS =================
+scope = [
+    "https://spreadsheets.google.com/feeds",
+    "https://www.googleapis.com/auth/drive"
+]
 
-# 🔹 /start buyrug‘i
-@bot.message_handler(commands=["start"])
-def send_welcome(message):
-    markup = types.InlineKeyboardMarkup()
-    join_btn = types.InlineKeyboardButton("✅ Obuna bo‘ldim", callback_data="check_join")
-    markup.add(join_btn)
+creds = ServiceAccountCredentials.from_json_keyfile_name(
+    "association-483913-38b00aaa6a9d.json", scope
+)
+client = gspread.authorize(creds)
+sheet = client.open(SHEET_NAME).sheet1
+
+# ================= START =================
+@bot.message_handler(commands=['start'])
+def start(message):
+    bot.send_message(
+        message.chat.id,
+        "Assalomu alaykum!\n\n"
+        "Ish yarmarkasida ishtirok etish uchun ro‘yxatdan o‘ting.\n\n"
+        "Iltimos, to‘liq ismingizni kiriting 👇"
+    )
+    bot.register_next_step_handler(message, get_name)
+
+# ================= NAME =================
+def get_name(message):
+    user_data[message.chat.id] = {
+        "name": message.text,
+        "telegram_id": message.from_user.id,
+        "username": message.from_user.username
+    }
+
+    kb = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+    kb.add(types.KeyboardButton("📞 Telefon raqamni yuborish", request_contact=True))
 
     bot.send_message(
         message.chat.id,
-        f"🎬 Salom, {message.from_user.first_name}!\n\n"
-        "To‘liq filmlarni tomosha qilish uchun avval bizning asosiy kanalimizga obuna bo‘ling 👇\n\n"
-        "💼 Eng ishonchli va litsenziyaga ega Xususiy Bandlik Agentliklari — bir joyda!\n"
-        "Endi har birini alohida izlab yurish shart emas — faqat 1 bosishda eng faol va ishonchli XBA kanallariga a’zo bo‘ling! 🔥\n\n"
-        "🌍 Ish topish — oson, tez va xavfsiz!\n\n"
-        "👇 Quyidagi havolani bosing va tanlovni o‘zingiz qiling:\n"
-        "➡️ 👉 [A’zo bo‘lish uchun bosing](https://t.me/addlist/hY66mxmsU3cwOTRi)!", 
-        parse_mode="Markdown",
-        reply_markup=markup
+        "Rahmat!\nEndi telefon raqamingizni yuboring 👇",
+        reply_markup=kb
     )
 
-# 🔹 Obuna tekshirish callback
-@bot.callback_query_handler(func=lambda call: call.data == "check_join")
-def callback_check(call):
-    if is_subscribed(call.from_user.id):
-        bot.send_message(
-            call.message.chat.id,
-            "✅ Tabriklaymiz! Siz kanalga muvaffaqiyatli obuna bo‘ldingiz.\n\n"
-            "🎞 Endi kino kodini kiriting (masalan: #001)"
-        )
-    else:
-        bot.send_message(
-            call.message.chat.id,
-            f"❌ Siz hali obuna bo‘lmadingiz.\nIltimos, kanalga obuna bo‘ling va qayta urinib ko‘ring 👇\n{CHANNEL_USERNAME}"
-        )
+# ================= PHONE =================
+@bot.message_handler(content_types=['contact'])
+def get_phone(message):
+    user_data[message.chat.id]["phone"] = message.contact.phone_number
+    ask_location(message.chat.id)
 
-# 🔹 Kino kodi orqali kino yuborish
-@bot.message_handler(func=lambda m: m.text.startswith("#"))
-def send_movie(message):
-    code = message.text.strip()
+# ================= LOCATION =================
+def ask_location(chat_id):
+    kb = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
 
-    if not is_subscribed(message.from_user.id):
-        bot.send_message(message.chat.id, f"❌ Iltimos, avval {CHANNEL_USERNAME} kanaliga obuna bo‘ling.")
-        return
+    locations = [
+        "Toshkent shahar",
+        "Toshkent viloyati",
+        "Andijon viloyati",
+        "Fargona viloyati",
+        "Namangan viloyati",
+        "Sirdaryo viloyati",
+        "Jizzah viloyati",
+        "Samarqand viloyati",
+        "Buhoro viloyati",
+        "Navoi viloyati",
+        "Horazm viloyati",
+        "Qoraqalpogiston Respublikasi",
+        "Qashqadaryo viloyati",
+        "Surhondaryo viloyati"
+    ]
 
-    # 🔸 Kodga mos kino ID lar
-    movies = {
-        "#104": 3,
-        "#1102": 4,
-        "#1105": 5,
-        "#843": 6,
-        "#1212": 7,
-        "#16": 8,
-        "#9": 9,
-        "#1315": 10,
-        "#10": 11,
-        "#24": 12,
-        "#26": 13,
-        "#25": 14,
-        "#27": 15,
-        "#105": 16,
-        "#1200": 17,
-        "#106": 18,
-        "#250": 19,
-        "#2019": 20,
-        "#219": 21,
-        "#404": 22,
-        "#270": 23,
-        "#390": 24,
-        "#395": 25,
-        "#398": 26,
-        "#410": 27,
-        "#444": 28,
-        "#408": 29,
-        "#256": 30,
-        "#999": 31, 
-"#898": 32,
- "#598": 33,
-    }
+    for loc in locations:
+        kb.add(types.KeyboardButton(loc))
 
-    if code in movies:
-        try:
-            bot.copy_message(message.chat.id, MOVIE_CHANNEL, movies[code])
-        except Exception as e:
-            bot.send_message(
-                message.chat.id,
-                  "⚠️ Noto‘g‘ri kod. Iltimos, to‘g‘ri kino kodini kiriting (masalan: #999)"
-            )
-            print("Xatolik:", e)
-    else:
+    msg = bot.send_message(
+        chat_id,
+        "Iltimos, qaysi hududdan ekanligingizni tanlang 👇",
+        reply_markup=kb
+    )
+    bot.register_next_step_handler(msg, save_location)
+
+# ================= SAVE LOCATION =================
+def save_location(message):
+    valid_locations = [
+        "Toshkent shahar",
+        "Toshkent viloyati",
+        "Andijon viloyati",
+        "Fargona viloyati",
+        "Namangan viloyati",
+        "Sirdaryo viloyati",
+        "Jizzah viloyati",
+        "Samarqand viloyati",
+        "Buhoro viloyati",
+        "Navoi viloyati",
+        "Horazm viloyati",
+        "Qoraqalpogiston Respublikasi",
+        "Qashqadaryo viloyati",
+        "Surhondaryo viloyati"
+    ]
+
+    if message.text not in valid_locations:
         bot.send_message(
             message.chat.id,
-            "⚠️ Noto‘g‘ri kod. Iltimos, to‘g‘ri kino kodini kiriting (masalan: #999)"
+            "❌ Iltimos, faqat berilgan ro‘yxatdan tanlang."
+        )
+        ask_location(message.chat.id)
+        return
+
+    user_data[message.chat.id]["location"] = message.text
+
+    kb = types.InlineKeyboardMarkup()
+    kb.add(types.InlineKeyboardButton(
+        "📢 Kanalga obuna bo‘lish",
+        url="https://t.me/xorijda_ish_elonlari"
+    ))
+    kb.add(types.InlineKeyboardButton(
+        "✅ Obunani tekshirish",
+        callback_data="check_sub"
+    ))
+
+    bot.send_message(
+        message.chat.id,
+        "Ish yarmarkasida ishtirok etish uchun kanalga obuna bo‘ling 👇",
+        reply_markup=kb
+    )
+
+# ================= CHECK SUB =================
+@bot.callback_query_handler(func=lambda call: call.data == "check_sub")
+def check_subscription(call):
+    try:
+        status = bot.get_chat_member(CHANNEL_USERNAME, call.from_user.id).status
+
+        if status in ["member", "administrator", "creator"]:
+            save_to_sheet(call.message.chat.id)
+
+            bot.answer_callback_query(call.id, "Tasdiqlandi ✅")
+            bot.send_message(
+                call.message.chat.id,
+                "✅ Obuna tasdiqlandi!\n\n"
+                "Siz Ish yarmarkasiga kirishingiz mumkin."
+            )
+        else:
+            bot.answer_callback_query(call.id, "❌ Obuna topilmadi")
+            bot.send_message(
+                call.message.chat.id,
+                "❌ Avval kanalga obuna bo‘ling va qayta tekshiring."
+            )
+
+    except Exception:
+        bot.send_message(
+            call.message.chat.id,
+            "❌ Tekshirishda xatolik yuz berdi."
         )
 
-# 🔹 Botni ishga tushirish
-if __name__ == "__main__":
-    time.sleep(3)
-    print("🤖 Bot ishga tushdi...")
-    bot.infinity_polling(skip_pending=True)
+# ================= SAVE TO SHEET =================
+def save_to_sheet(chat_id):
+    data = user_data.get(chat_id)
+    if not data:
+        return
 
+    sheet.append_row([
+        data.get("name"),
+        data.get("phone"),
+        data.get("location"),
+        data.get("telegram_id"),
+        data.get("username"),
+        "YES",
+        datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    ])
+
+# ================= RUN =================
+bot.infinity_polling()
