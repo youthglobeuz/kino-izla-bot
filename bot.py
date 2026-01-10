@@ -3,7 +3,10 @@ from telebot import types
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime
+import os
+import json
 
+# ================= CONFIG =================
 BOT_TOKEN = "8532689265:AAGMA6pwWeNpzjD7LS9Jrb9fsn7xgJmySgA"
 CHANNEL_USERNAME = "@xorijda_ish_elonlari"
 SHEET_NAME = "Xorijda ish yarmakasi lead"
@@ -17,9 +20,13 @@ scope = [
     "https://www.googleapis.com/auth/drive"
 ]
 
-creds = ServiceAccountCredentials.from_json_keyfile_name(
-    "association-483913-38b00aaa6a9d.json", scope
+# Render.com environment variable'dan service account JSON olish
+creds_dict = json.loads(os.environ["GOOGLE_CREDENTIALS_JSON"])
+
+creds = ServiceAccountCredentials.from_json_keyfile_dict(
+    creds_dict, scope
 )
+
 client = gspread.authorize(creds)
 sheet = client.open(SHEET_NAME).sheet1
 
@@ -120,7 +127,7 @@ def save_location(message):
     kb = types.InlineKeyboardMarkup()
     kb.add(types.InlineKeyboardButton(
         "📢 Kanalga obuna bo‘lish",
-        url="https://t.me/xorijda_ish_elonlari"
+        url=f"https://t.me/{CHANNEL_USERNAME.replace('@','')}"
     ))
     kb.add(types.InlineKeyboardButton(
         "✅ Obunani tekshirish",
@@ -178,4 +185,4 @@ def save_to_sheet(chat_id):
     ])
 
 # ================= RUN =================
-bot.infinity_polling()
+bot
