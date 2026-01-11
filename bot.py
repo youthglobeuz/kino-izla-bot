@@ -1,4 +1,5 @@
 import os
+import json
 import telebot
 from telebot import types
 import gspread
@@ -9,6 +10,7 @@ from datetime import datetime
 BOT_TOKEN = os.environ.get("BOT_TOKEN")  # Telegram bot token
 CHANNEL_USERNAME = os.environ.get("CHANNEL_USERNAME")  # @xorijda_ish_elonlari
 SHEET_NAME = os.environ.get("SHEET_NAME")  # Google Sheet nomi
+GOOGLE_CREDENTIALS_JSON = os.environ.get("GOOGLE_CREDENTIALS_JSON")  # credentials.json mazmuni
 
 # ================= GOOGLE SHEETS =================
 scope = [
@@ -16,8 +18,9 @@ scope = [
     "https://www.googleapis.com/auth/drive"
 ]
 
-# credentials.json faylni loyihaga joylang
-creds = ServiceAccountCredentials.from_json_keyfile_name("credentials.json", scope)
+# JSON stringni dict ga o‘zgartiramiz
+creds_dict = json.loads(GOOGLE_CREDENTIALS_JSON)
+creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
 client = gspread.authorize(creds)
 sheet = client.open(SHEET_NAME).sheet1
 
@@ -36,7 +39,6 @@ def start(message):
     )
     bot.register_next_step_handler(message, get_name)
 
-# ================= NAME =================
 def get_name(message):
     user_data[message.chat.id] = {
         "name": message.text.strip(),
@@ -53,13 +55,11 @@ def get_name(message):
         reply_markup=kb
     )
 
-# ================= PHONE =================
 @bot.message_handler(content_types=['contact'])
 def get_phone(message):
     user_data[message.chat.id]["phone"] = message.contact.phone_number
     ask_location(message.chat.id)
 
-# ================= LOCATION =================
 def ask_location(chat_id):
     kb = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
     locations = [
@@ -78,7 +78,6 @@ def ask_location(chat_id):
     )
     bot.register_next_step_handler(msg, save_location)
 
-# ================= SAVE LOCATION =================
 def save_location(message):
     valid_locations = [
         "Toshkent shahar", "Toshkent viloyati", "Andijon viloyati", "Fargona viloyati",
@@ -113,7 +112,6 @@ def save_location(message):
         reply_markup=kb
     )
 
-# ================= CHECK SUB =================
 @bot.callback_query_handler(func=lambda call: call.data == "check_sub")
 def check_subscription(call):
     try:
@@ -140,7 +138,6 @@ def check_subscription(call):
             f"❌ Tekshirishda xatolik yuz berdi.\n{str(e)}"
         )
 
-# ================= SAVE TO SHEET =================
 def save_to_sheet(chat_id):
     data = user_data.get(chat_id)
     if not data:
@@ -156,5 +153,4 @@ def save_to_sheet(chat_id):
         datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     ])
 
-# ================= RUN BOT =================
 bot.infinity_polling()
